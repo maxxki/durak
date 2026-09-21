@@ -1,0 +1,43 @@
+# Durak-KI
+
+Eine spielbare Künstliche Intelligenz für das russische Kartenspiel **Durak**
+(36-Karten-Version, 2 Spieler, Podkidnoy mit Transfer). Die KI basiert auf
+**ISMCTS** (Information Set Monte Carlo Tree Search) mit einer heuristischen
+Simulations-Policy und expliziter Kartenzählung im Endspiel.
+
+Das Projekt ist in vier Stufen aufgebaut: deterministische Spielumgebung,
+Suchagent, Benchmark-Framework und Terminal-UI. Alle vier Stufen sind durch
+Unit-Tests abgesichert (75 Tests, alle grün).
+
+## Motivation
+
+Durak ist ein Spiel mit **imperfekter Information**, die sich im Spielverlauf
+schrittweise auflöst: Am Anfang kennt man nur seine eigene Hand und die offene
+Trumpfkarte, am Ende (Deck leer) lassen sich die Karten des Gegners fast exakt
+ableiten. Genau dieser Übergang macht Durak zu einem interessanten Testfeld
+für Suchalgorithmen — im Gegensatz zu Schach braucht es dafür kein großes
+Sprachmodell, sondern eine saubere Spielumgebung, Kartenzählung und eine
+Endspiel-Heuristik.
+
+## Architektur
+
+Vier Module, jeweils mit eigener Testdatei:
+
+| Modul | Zweck |
+|---|---|
+| `durak_env.py` | Deterministische Spielumgebung (Regeln, Zustandsübergänge, legale Züge) |
+| `ismcts_agent.py` | ISMCTS-Agent mit heuristischer Policy und Kartenzählung |
+| `benchmark.py` | Benchmark-Framework mit Wilson-CI und McNemar-Test |
+| `main.py` | Terminal-UI: Mensch gegen KI |
+
+**Datenfluss:** `main.py` → `ismcts_agent.py` → `durak_env.py`. Der Benchmark
+ruft `ismcts_agent.py` direkt auf und vergleicht gegen Zufallspolitiken.
+
+## Installation
+
+Getestet auf **Fedora Silverblue** in einer Toolbox mit Python 3.12+.
+
+```bash
+toolbox create --distro fedora --release 40 durak-dev
+toolbox enter durak-dev
+pip install -r requirements.txt
