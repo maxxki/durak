@@ -1,0 +1,6 @@
+pycache/
+*.pyc
+.pytest_cache/
+baseline_2a_vs_random.json
+run_baseline.log
+.venv/
