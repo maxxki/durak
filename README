@@ -1,3 +1,4 @@
+
 # Durak-KI
 
 Eine spielbare Künstliche Intelligenz für das russische Kartenspiel **Durak**
@@ -41,3 +42,98 @@ Getestet auf **Fedora Silverblue** in einer Toolbox mit Python 3.12+.
 toolbox create --distro fedora --release 40 durak-dev
 toolbox enter durak-dev
 pip install -r requirements.txt
+```
+
+## Nutzung
+
+### Gegen die KI spielen
+
+```bash
+python main.py --seed 42 --time-budget 2.0
+```
+
+Optionen:
+- `--seed INT` — Seed für Kartenverteilung und Agent (Default: 0)
+- `--time-budget FLOAT` — Sekunden pro KI-Zug (Default: 2.0)
+- `--human-player {0,1}` — Sitzplatz des Menschen (Default: 0)
+- `--cheat` — Debug-Modus: zeigt Gegnerhand und Deck an
+
+### Benchmark ausführen
+
+```bash
+python run_baseline.py
+```
+
+Spielt 100 Partien ISMCTS-Agent gegen Zufalls-Gegner mit `time_budget=2.0`,
+schreibt Ergebnisse nach `baseline_2a_vs_random.json`. Laufzeit auf einem
+i3 7th Gen: ca. 2,5–3,5 Stunden.
+
+### Tests
+
+```bash
+python -m pytest -v
+```
+
+75 Tests in vier Dateien, alle in unter einer Minute durchlaufen (der
+100-Partien-Benchmark ist kein Teil der Suite).
+
+## Design-Entscheidungen
+
+### Warum ISMCTS statt LLM?
+
+Durak hat einen kleinen Suchraum (~10^11 realistische Zustände) und eine
+einfache Regelstruktur. Die entscheidenden strategischen Größen —
+Wahrscheinlichkeit, dass der Gegner eine Karte schlagen kann, Kartenzählung,
+Trumpf-Ass als Anker — sind deterministisch berechenbar. Ein LLM würde hier
+viel Trainings-Overhead produzieren, ohne einen echten Vorteil zu bieten.
+ISMCTS rechnet die optimale Entscheidung direkt aus dem Spielzustand.
+
+### Determinisierung: harte + weiche Information
+
+Der Agent sieht nur seine eigene Hand und die offen gespielten Karten
+(`seen_cards`). Aus dem State allein lässt sich die **harte Information**
+ableiten: Karten, die definitiv abgelegt sind, kann der Gegner nicht halten.
+Die **weiche Information** (welche Karten der Gegner wahrscheinlich nicht
+hat, weil er sie in vergangenen Runden nicht geschlagen hat) ist als
+Erweiterung (Stufe 2b) vorbereitet, aber in Stufe 2a noch nicht genutzt.
+
+### Endspiel-Heuristik
+
+Sobald das Deck leer ist, zählt nicht mehr Angriffslust, sondern
+**Karten-Vermeidung**: Der Angreifer sucht die Karte mit der niedrigsten
+Wahrscheinlichkeit, vom Gegner geschlagen zu werden. Kann der Gegner sie
+nicht schlagen, muss er aufnehmen — und der Angreifer bleibt in der
+Kontroll-Schleife. Diese Strategie entscheidet das Durak-Endspiel.
+
+## Statistik
+
+Der Benchmark nutzt zwei statistische Verfahren:
+
+- **Wilson-Score-Konfidenzintervall** statt Normalapproximation, weil die
+  Siegrate nahe 1 liegt und die Normalformel dort Intervalle > 1 liefern kann.
+- **McNemar-Test** für den gepaarten A/B-Vergleich: Zwei Konfigurationen
+  werden mit **denselben Seeds** gespielt, sodass jede Ergebnisdifferenz
+  kausal auf die Konfiguration zurückführbar ist, nicht auf Zufallsrauschen.
+
+## Projektstatus
+
+| Stufe | Beschreibung | Tests |
+|---|---|---|
+| 1 | Spielumgebung | 59 passed |
+| 2a | ISMCTS-Agent (Basis) | 5 passed |
+| 3 | Benchmark-Framework | 7 passed |
+| 4 | Terminal-UI | 4 passed |
+
+## Ausblick
+
+- **Stufe 2b**: Determinisierung mit weicher Information (Aktionshistorie)
+- **Endspiel-Lösung**: Bei leerem Deck ist Durak endlich — eine kleine
+  Endspiel-Datenbank wäre berechenbar.
+- **Mehrspieler-Variante**: 3–6 Spieler mit angepasster ISMCTS-Baumstruktur.
+
+## Lizenz
+
+MIT — Hobbyprojekt, frei verwendbar.
+
+
+
