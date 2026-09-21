@@ -124,6 +124,16 @@ Der Benchmark nutzt zwei statistische Verfahren:
 | 3 | Benchmark-Framework | 7 passed |
 | 4 | Terminal-UI | 4 passed |
 
+## Ergebnisse
+
+Baseline-Lauf: 100 Partien ISMCTS-Agent (Stufe 2a) gegen Zufalls-Gegner,
+`time_budget=2.0`, abwechselnde Sitzplätze 0/1.
+
+- **Siegrate: 91,0 %** (Wilson-95%-KI: [83,8 %, 95,2 %])
+- Ø 80 Züge pro Partie
+- Ø Zugzeit: 1,73 s (Budget: 2,0 s)
+- Vollständige Rohdaten: [`baseline_2a_vs_random.json`](baseline_2a_vs_random.json)
+
 ## Ausblick
 
 - **Stufe 2b**: Determinisierung mit weicher Information (Aktionshistorie)
